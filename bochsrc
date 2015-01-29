@@ -4,7 +4,8 @@ vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 floppya: 1_44=bin/a.img, status=inserted
 
-boot: floppy
+#boot: floppy
+boot: a
 log: bochsout.txt
 #mouse: enabled=0
 keyboard: keymap=/usr/local/share/bochs/keymaps/x11-pc-us.map

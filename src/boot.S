@@ -1,13 +1,68 @@
+[global _start]
 [bits 16]
-	org 0x7c00
+_start:
+	; still start at org 0x7c00
 	mov bp, 0x9000
 	mov sp, bp
+reset_drive:
+	mov ah, 0
+	int 13h ; reset drivers
+	or ah, ah ; check error code
+	jnz reset_drive ; if ah != 0
+	;; load kernel code to 0x1000(es:bx = 0x1000:0000)
+	mov ax, 0x1000
+	mov es, ax ; es = 0x1000
+	mov di, 0 ; *buffer
+	mov si, 1 ; sector 1
+	mov cx, 128 ; read 128 sectors, 64KB
+sect_loop:
+	call read_sect 
+	inc si ; next sector
+	add di, 0x200 ; += buffer len
+	dec cx
+	jnz sect_loop	
+
 	call print_string 
 	jmp switch_to_pm
 	jmp $
 
 %include "src/print_string.asm"
 %include "src/print_string_pm.asm"
+;; read_sect(sn, *buf) read sector from the disk
+;; input: si-logical sector number; 
+;;        di-*buf
+read_sect:
+	push cx
+	push bx
+	
+	mov ax, si ;sector number
+	mov bx, di ;buffer address
+	; ch = cylinder = sn / 36
+	mov cl, 36
+	div cl
+	mov ch, al
+	; dh = head = (sn%36) / 18
+	mov al, ah
+	mov ah, 0
+	mov cl, 18
+	div cl
+	mov dh, al
+	; cl = start sector = (sn%36) % 18 + 1	
+	mov cl, ah
+	inc cl
+	; dl = drive = 0
+	mov dl, 0
+	; raise int 13h read to es:bx
+	mov ax, 201h ; ah = 2, al = 1 only time
+	int 13h
+	;jc disk_error ; if error
+
+	pop bx
+	pop cx
+	;cmp dh, al ; if AL != DH
+	;jne disk_error
+	ret
+
 ; Switch to protected mode
 switch_to_pm:
 	cli ; close interrupt
@@ -23,8 +78,10 @@ switch_to_pm:
 	mov cr0, eax
 	
 	jmp dword CODE_SEG:init_pm ; to 32-bit code
+	jmp $
 
 [bits 32]
+[extern main]
 init_pm:
 	mov ax, DATA_SEG
 	mov ds, ax
@@ -35,9 +92,12 @@ init_pm:
 
 	mov ebp, 0x90000 ; right place for stack pointer
 	mov esp, ebp
-	
+
+	cld
+
 	mov ebx, MSG_PROT_MODE
 	call print_string_pm
+	call main
 	jmp $
 ; GDT
 gdt_start:
