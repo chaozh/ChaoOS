@@ -1,42 +1,43 @@
+[org 0x7c00]
+KERNEL_OFFSET equ 0x1000
 [global _start]
-[bits 16]
 _start:
 	; still start at org 0x7c00
 	mov bp, 0x9000
 	mov sp, bp
+	call print_string 
+[bits 16]
 reset_drive:
 	mov ah, 0
 	int 13h ; reset drivers
 	or ah, ah ; check error code
 	jnz reset_drive ; if ah != 0
-	;; load kernel code to 0x1000(es:bx = 0x1000:0000)
-	mov ax, 0x1000
-	mov es, ax ; es = 0x1000
-	mov di, 0 ; *buffer
+	;;for debug load code to 0x1000
+	;; load kernel code to 0x10000(es:bx = 0x1000:0000)
+	mov ax, KERNEL_OFFSET 
+	;mov es, ax ; es = 0x1000
+	mov bx, ax ; *buffer
 	mov si, 1 ; sector 1
-	mov cx, 128 ; read 128 sectors, 64KB
+	mov cx, 2 ; read 128 sectors, 64KB
 sect_loop:
 	call read_sect 
 	inc si ; next sector
-	add di, 0x200 ; += buffer len
+	add bx, 0x200 ; += buffer len
 	dec cx
 	jnz sect_loop	
 
-	call print_string 
 	jmp switch_to_pm
 	jmp $
 
 %include "src/print_string.asm"
-%include "src/print_string_pm.asm"
 ;; read_sect(sn, *buf) read sector from the disk
 ;; input: si-logical sector number; 
-;;        di-*buf
+;;        bx-*buf
 read_sect:
 	push cx
-	push bx
+	;push bx
 	
 	mov ax, si ;sector number
-	mov bx, di ;buffer address
 	; ch = cylinder = sn / 36
 	mov cl, 36
 	div cl
@@ -53,11 +54,12 @@ read_sect:
 	; dl = drive = 0
 	mov dl, 0
 	; raise int 13h read to es:bx
-	mov ax, 201h ; ah = 2, al = 1 only time
+	mov ah, 0x02
+	mov al, 0x01 ; ah = 2, al = 1 only time
 	int 13h
 	;jc disk_error ; if error
 
-	pop bx
+	;pop bx
 	pop cx
 	;cmp dh, al ; if AL != DH
 	;jne disk_error
@@ -65,6 +67,11 @@ read_sect:
 
 ; Switch to protected mode
 switch_to_pm:
+	xor ax, ax ; clear registers
+	mov ds, ax
+	mov ss, ax
+	mov es, ax
+
 	cli ; close interrupt
 	lgdt [gdt_desc] ; load GDT table
 	
@@ -81,7 +88,7 @@ switch_to_pm:
 	jmp $
 
 [bits 32]
-[extern main]
+%include "src/print_string_pm.asm"
 init_pm:
 	mov ax, DATA_SEG
 	mov ds, ax
@@ -89,15 +96,14 @@ init_pm:
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
+	;mov ebp, 0x90000 ; right place for stack pointer
+	;mov esp, ebp
 
-	mov ebp, 0x90000 ; right place for stack pointer
-	mov esp, ebp
-
-	cld
+	;cld
 
 	mov ebx, MSG_PROT_MODE
 	call print_string_pm
-	call main
+	jmp KERNEL_OFFSET; to entry
 	jmp $
 ; GDT
 gdt_start:

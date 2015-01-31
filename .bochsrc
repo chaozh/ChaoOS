@@ -2,7 +2,7 @@ megs: 32
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
-floppya: 1_44=bin/a.img, status=inserted
+floppya: 1_44=bin/ChaoOS.img, status=inserted
 
 #boot: floppy
 boot: a

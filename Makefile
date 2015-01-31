@@ -3,7 +3,7 @@ ASM = nasm
 CC = gcc
 LD = ld
 #This Program
-CHAOBOOT = bin/kernel.bin
+CHAOBOOT = bin/ChaoOS.img
 
 C_SOURCES = $(wildcard src/*.c)
 
@@ -19,11 +19,14 @@ debug: build
 build: 
 	echo 
 
-all: $(CHAOBOOT)
-buildimg: 
-	dd if=bin/kernel.bin of=bin/a.img bs=512 count=1 conv=notrunc
+all: $(CHAOBOOT) buildimg
+
+$(CHAOBOOT): bin/boot.bin bin/kernel.bin
+	cat $^ > $(CHAOBOOT)
+#buildimg: 
+#	dd if=$(CHAOBOOT) of=bin/a.img bs=512 count=1 conv=notrunc
 #Build the kernel binary, $^ = {*.o}
-$(CHAOBOOT): src/boot.o ${OBJ}
+bin/kernel.bin: src/entry.o ${OBJ}
 	$(LD) -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
 #Build the kernel object file
 %.o : %.c
@@ -32,6 +35,10 @@ $(CHAOBOOT): src/boot.o ${OBJ}
 %.o : %.S
 	$(ASM) $< -f elf -o $@
 
+bin/boot.bin : src/boot.S
+	$(ASM) $< -f bin -o $@
+
 clean:
 	rm src/*.o
 	rm -f $(CHAOBOOT)
+	rm -f bin/boot.bin bin/kernel.bin
