@@ -13,13 +13,13 @@ OBJ = ${C_SOURCES:.c=.o}
 run: bochs
 
 bochs: build 
-	bochs -q -f bochsrc
+	bochs -q -f .bochsrc
 debug: build
-	bochs -dbg -q -f bochsrc
+	bochs -dbg -q -f .bochsrc
 build: 
 	echo 
 
-all: $(CHAOBOOT) buildimg
+all: $(CHAOBOOT)
 
 $(CHAOBOOT): bin/boot.bin bin/kernel.bin
 	cat $^ > $(CHAOBOOT)

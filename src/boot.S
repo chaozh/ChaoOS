@@ -19,23 +19,17 @@ reset_drive:
 	mov bx, ax ; *buffer
 	mov si, 1 ; sector 1
 	mov cx, 2 ; read 128 sectors, 64KB
-sect_loop:
 	call read_sect 
-	inc si ; next sector
-	add bx, 0x200 ; += buffer len
-	dec cx
-	jnz sect_loop	
-
 	jmp switch_to_pm
 	jmp $
 
 %include "src/print_string.asm"
-;; read_sect(sn, *buf) read sector from the disk
+;; read_sect(sn, *buf, num) read sector from the disk
 ;; input: si-logical sector number; 
 ;;        bx-*buf
+;;        cx-num
 read_sect:
 	push cx
-	;push bx
 	
 	mov ax, si ;sector number
 	; ch = cylinder = sn / 36
@@ -55,12 +49,11 @@ read_sect:
 	mov dl, 0
 	; raise int 13h read to es:bx
 	mov ah, 0x02
-	mov al, 0x01 ; ah = 2, al = 1 only time
+	pop cx
+	mov al, cl ; ah = 2, al = 1 only time
 	int 13h
 	;jc disk_error ; if error
 
-	;pop bx
-	pop cx
 	;cmp dh, al ; if AL != DH
 	;jne disk_error
 	ret
