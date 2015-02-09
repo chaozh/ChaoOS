@@ -9,3 +9,4 @@ boot: a
 log: bochsout.txt
 #mouse: enabled=0
 keyboard: keymap=/usr/local/share/bochs/keymaps/x11-pc-us.map
+#gdbstub: enabled=1, port=1234

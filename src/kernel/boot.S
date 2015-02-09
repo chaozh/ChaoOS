@@ -18,12 +18,17 @@ reset_drive:
 	;mov es, ax ; es = 0x1000
 	mov bx, ax ; *buffer
 	mov si, 1 ; sector 1
-	mov cx, 2 ; read 128 sectors, 64KB
+	mov cx, 18 ; read 128 sectors, 64KB
+_read_sect_loop:
 	call read_sect 
+	inc si
+	add bx, 0x200
+	dec cx
+	jnz _read_sect_loop
 	jmp switch_to_pm
 	jmp $
 
-%include "src/print_string.asm"
+%include "src/kernel/print_string.asm"
 ;; read_sect(sn, *buf, num) read sector from the disk
 ;; input: si-logical sector number; 
 ;;        bx-*buf
@@ -49,13 +54,13 @@ read_sect:
 	mov dl, 0
 	; raise int 13h read to es:bx
 	mov ah, 0x02
-	pop cx
-	mov al, cl ; ah = 2, al = 1 only time
+	mov al, 1;cl ; ah = 2, al = 1 only time
 	int 13h
 	;jc disk_error ; if error
 
 	;cmp dh, al ; if AL != DH
 	;jne disk_error
+	pop cx
 	ret
 
 ; Switch to protected mode
@@ -81,7 +86,7 @@ switch_to_pm:
 	jmp $
 
 [bits 32]
-%include "src/print_string_pm.asm"
+%include "src/kernel/print_string_pm.asm"
 init_pm:
 	mov ax, DATA_SEG
 	mov ds, ax
@@ -89,7 +94,8 @@ init_pm:
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
-	;mov ebp, 0x90000 ; right place for stack pointer
+	;mov back stack pointer
+	;mov ebp, 0x1000
 	;mov esp, ebp
 
 	;cld

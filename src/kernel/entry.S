@@ -6,7 +6,7 @@ _start:
 	call print_string_pm
 	jmp ready
 	jmp $
-%include "src/print_string_pm.asm"
+%include "src/kernel/print_string_pm.asm"
 [extern main]
 ready:
 	call main
