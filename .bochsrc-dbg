@@ -7,7 +7,11 @@ floppya: 1_44=bin/ChaoOS.img, status=inserted
 #boot: floppy
 boot: a
 log: bochsout.txt
+panic: action=ask
+error: action=report
+info: action=report
+debug: action=ignore
 #mouse: enabled=0
 keyboard: keymap=/usr/local/share/bochs/keymaps/x11-pc-us.map
-#gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
+gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
 debug_symbols: file=bin/ChaoOS.sym

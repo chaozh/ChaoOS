@@ -89,37 +89,47 @@ void print_at(char* msg, int col, int row) {
 void print(char* msg) {
 	print_at(msg, -1, -1);
 }
-/*
+
+void printn(uint n, uint b){
+	static char *ntab = "0123456789ABCDEF";
+	uint a, m;
+	if ((a = n / b)){
+		printn(a, b);
+	}
+	m = n % b;
+	print_char(ntab[m], -1, -1, WHITE_ON_BLACK);
+}
+
 //a simple imp need change!
 void printk(char* fmt, ...) {
 	char c;
 	int n;
-	int* adx = (int*)(void*)(&fmt) + 1;
+	int *adx = (int*)(void*)(&fmt) + 1;
 loop:
 	while((c = *fmt++) != '%'){
 		if(c=='\0') return;
-		putchar(c);
+		print_char(c, -1, -1, WHITE_ON_BLACK);
 	}
 	c = *fmt++;
 	//deal with %d or %l
 	if(c=='d' || c== 'l'){
 		n = *adx;
 		if (n<0) {
-			putchar('-');
+			print_char('-', -1, -1, WHITE_ON_BLACK);
 			n *= -1;
 		}
-		printn(n, 10); //???
+		printn(n, 10);
 	}
 	if(c=='o' || c=='x')
 		printn(*adx, c=='o'?8:16);
 	if(c=='c')
-		printn(*adx);
+		print_char(*adx, -1, -1, WHITE_ON_BLACK);
 	if(c=='s')
-		print((char*)*adx); //puts()
+		print((char*)*adx);
 	adx++;
 	goto loop;	
 }
-*/
+
 void cls() {
 	memset(VIDEO_ADDRESS, ' '|WHITE<<8, 2*MAX_ROWS*MAX_COLS);
 	set_cursor(get_screen_offset(0, 0));

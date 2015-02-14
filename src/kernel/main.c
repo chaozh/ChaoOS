@@ -1,10 +1,11 @@
 #include <types.h>
 #include <x86.h>
-
-struct tss_desc tss;
+#include <sched.h>
 
 struct seg_desc gdt[GDT_SIZE] = {{0, }, };//init
 struct gdt_desc gdt_desc;
+
+void init();
 
 void set_seg(struct seg_desc *seg, uint base, uint limit, uint dpl, uint type){
 	seg->limit_lo = ((limit) >> 12) & 0xffff;
@@ -38,17 +39,36 @@ void gdt_init() {
 	gdt_desc.limit = (sizeof(struct seg_desc) * GDT_SIZE) - 1;		
 	//load gdt
 	asm volatile("lgdt %0": :"m"(gdt_desc));
-	//load tss
+	//load tss for process exange
 	asm volatile("ltr %%ax": :"a"(_TSS));
 }
 
-void main() {
+static inline void sti() {
+	asm volatile("sti");
+}
+
+void start_kernel() {
 	cls(); 
-	print("start kernel\n");	
 	gdt_init(); 	
 	print("init gdt\n");
-	idt_init();	
+	idt_init();// trap_init & irq_init	
 	print("init ldt\n");
+	//process.c: init zero process also called idle
+	swapper_init();		
+	//
 	keybd_init();	
 	print("keybd init\n");
+	
+	print("start kernel\n");
+	sti();	 
+	/*kernel_thread(init, NULL, CLONE_FS | CLONE_SIGHAND);
+	for(;;){
+		sti();
+		schedule();
+	}*/	
+}
+
+void init() {
+	print("start init thread\n");
+	for(;;);
 }

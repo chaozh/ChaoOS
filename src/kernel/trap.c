@@ -1,11 +1,13 @@
 #include <types.h>
 #include <x86.h>
+//from entry.S
+extern uint handlers[IDT_SIZE];
 
 struct gate_desc idt[IDT_SIZE];
 struct idt_desc idt_desc;
 
 //handlers to each No.
-static void* handler_routines[IDT_SIZE] = {0,};
+static void* interrupt[IDT_SIZE] = {0,};
 
 void idt_set_gate(uint nr, uint base, ushort sel, uchar type, uchar dpl) {
 	idt[nr].base_lo = (base & 0xFFFF);
@@ -30,16 +32,22 @@ static inline void trap_gate(uint nr, uint base) {
 	idt_set_gate(nr, base, KERN_CS, STS_TRG, RING0);
 }
 
-void _handler() {
-
-}
-
 void set_handler(int nr, int (*func)(struct trap *tf)) {
-	handler_routines[nr] = func;
+	interrupt[nr] = func;
 }
 
-void __idt_init() {
-	sys_gate(0x80, (uint)_handler);
+void trap_init() {
+	int i;
+	for(i=0; i<32; i++){
+		trap_gate(i, handlers[i]);
+		printk("handler[%d]:%d\n",i,&handlers[i]);
+	}
+	for(i=32; i<48; i++)
+		intr_gate(i, handlers[i]);
+	sys_gate(0x03, handlers[0x03]); // int 3
+	sys_gate(0x04, handlers[0x04]); // overflow
+	sys_gate(0x80, handlers[0x05]); // round
+	sys_gate(0x80, handlers[0x80]);
 }
 
 void irq_enable(uchar irq) {
@@ -49,7 +57,7 @@ void irq_enable(uchar irq) {
 	port_byte_out(PIC2_DATA, irq_mask >> 8);
 }
 
-void irq_init() {
+void init_IRQ() {
 	//init pic for interrupt
 	port_byte_out(PIC1, 0x11);
 	port_byte_out(PIC2, 0x11);
@@ -69,12 +77,35 @@ void lidt(struct idt_desc idtd) {
 	asm volatile("lidt %0": : "m"(idtd));
 }
 
+/**
+ * Common handler for all IRQ reqs 
+ *
+ */
+void do_IRQ(struct trap *tf) {
+	void (*func)(struct trap *tf);
+	print("do_IRQ\n");
+	func = interrupt[tf->int_no];
+	if(tf->int_no < 32){
+		//trap
+		if(func) 
+			func(tf);
+		
+	} else {
+		//irq, syscall
+		if(func)
+			func(tf);
+	}	
+	//only schedule when trying return to user mode
+	//if((tf->cs & 3) == RING3)
+	//	schedule();
+}
+
 void idt_init() {
 	idt_desc.base = (uint)&idt;
 	idt_desc.limit = (sizeof(struct gate_desc) * IDT_SIZE) - 1;
 	// init irq
-	irq_init();
+	init_IRQ();
 	// init idt table
-	__idt_init();
+	trap_init();
 	lidt(idt_desc);
 }
