@@ -25,7 +25,7 @@ int get_cursor() {
 void set_cursor(int offset) {
 	offset /= 2;
 	port_byte_out(REG_SCREEN_CTRL, 14);
-	port_byte_out(REG_SCREEN_DATA, (uchar)offset >> 8);
+	port_byte_out(REG_SCREEN_DATA, (uchar)(offset >> 8));
 	port_byte_out(REG_SCREEN_CTRL, 15);
 	port_byte_out(REG_SCREEN_DATA, (uchar)offset);
 }
@@ -91,7 +91,7 @@ void print(char* msg) {
 }
 
 void printn(uint n, uint b){
-	static char *ntab = "0123456789ABCDEF";
+	static char* ntab = "0123456789ABCDEF";
 	uint a, m;
 	if ((a = n / b)){
 		printn(a, b);

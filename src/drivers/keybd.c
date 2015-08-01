@@ -1,7 +1,7 @@
 #include <types.h>
 #include <x86.h>
 
-#include <tty.h>
+#include <console.h>
 #include <vga.h>
 #include <keybd.h>
 
@@ -29,7 +29,7 @@ int special(char ch) {
 int do_keybd_intr(struct trap *tf){
 	uchar tmp, ch, m;
 	uchar* map = keybd_map;
-	print("do_keybd_intr\n");
+	//print("do_keybd_intr\n");
 	//check keyboard status if no data
 	if ((port_byte_in(KB_STAT) && KB_STAT_DIB) == 0) {
 		return -1;

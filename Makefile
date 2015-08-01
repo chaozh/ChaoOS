@@ -3,6 +3,8 @@ ASM = nasm
 CC = gcc
 LD = ld
 CINC := -Isrc/include
+CFLAGS := -Wall -nostdinc -fno-builtin -fno-stack-protector -finline-functions -finline-small-functions -findirect-inlining -finline-functions -finline-functions-called-once
+
 #This Program
 CHAOBOOT = bin/ChaoOS.img
 CHAOELF = bin/kernel.elf
@@ -28,12 +30,11 @@ $(CHAOBOOT): bin/boot.bin bin/kernel.bin
 #buildimg: 
 #	dd if=$(CHAOBOOT) of=bin/a.img bs=512 count=1 conv=notrunc
 #Build the kernel binary, $^ = {*.o}
-#bin/kernel.bin: src/kernel/entry.o ${OBJ}
-#	$(LD) -m elf_i386 -o $@ -Ttext 0x1000 $^ --oformat binary
 bin/kernel.bin: $(CHAOELF)
 	objcopy -R .pdr -R .comment -R .note -S -O binary $< $@
 $(CHAOELF): src/kernel/entry.o ${OBJ}
-	$(LD) $^ -m elf_i386 -o bin/kernel.elf -Ttext 0x1000
+	$(LD) $^ -m elf_i386 -o $@ -Ttext 0x1000
+	#$(LD) $^ -m elf_i386 -o $@ -T build/kernel.ld 
 $(CHAOSYM): $(CHAOELF) 
 	(nm $< | sort) > $@
 	

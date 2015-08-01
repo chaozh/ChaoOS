@@ -1,7 +1,7 @@
 #include <types.h>
 #include <x86.h>
 //from entry.S
-extern uint handlers[IDT_SIZE];
+extern uint handler[IDT_SIZE];
 
 struct gate_desc idt[IDT_SIZE];
 struct idt_desc idt_desc;
@@ -38,16 +38,14 @@ void set_handler(int nr, int (*func)(struct trap *tf)) {
 
 void trap_init() {
 	int i;
-	for(i=0; i<32; i++){
-		trap_gate(i, handlers[i]);
-		printk("handler[%d]:%d\n",i,&handlers[i]);
-	}
+	for(i=0; i<32; i++)
+		trap_gate(i, handler[i]);
 	for(i=32; i<48; i++)
-		intr_gate(i, handlers[i]);
-	sys_gate(0x03, handlers[0x03]); // int 3
-	sys_gate(0x04, handlers[0x04]); // overflow
-	sys_gate(0x80, handlers[0x05]); // round
-	sys_gate(0x80, handlers[0x80]);
+		intr_gate(i, handler[i]);
+	sys_gate(0x03, handler[0x03]); // int 3
+	sys_gate(0x04, handler[0x04]); // overflow
+	sys_gate(0x80, handler[0x05]); // round
+	sys_gate(0x80, handler[0x80]);
 }
 
 void irq_enable(uchar irq) {
@@ -83,7 +81,7 @@ void lidt(struct idt_desc idtd) {
  */
 void do_IRQ(struct trap *tf) {
 	void (*func)(struct trap *tf);
-	print("do_IRQ\n");
+	//print("do_IRQ\n");
 	func = interrupt[tf->int_no];
 	if(tf->int_no < 32){
 		//trap
@@ -98,6 +96,18 @@ void do_IRQ(struct trap *tf) {
 	//only schedule when trying return to user mode
 	//if((tf->cs & 3) == RING3)
 	//	schedule();
+}
+
+void show_stack() {
+
+}
+
+void dump_stack() {
+    
+}
+
+void dump_regs() {
+
 }
 
 void idt_init() {

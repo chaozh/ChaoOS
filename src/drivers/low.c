@@ -1,6 +1,6 @@
 #include <types.h>
 static inline void io_delay() {
-	__asm__("jmp 1f;1:jmp 1f; 1:");
+	__asm__("jmp 1f; 1: jmp 1f; 1:");
 }
 
 uchar port_byte_in(ushort port) {

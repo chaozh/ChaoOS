@@ -10,7 +10,8 @@ _start:
 [extern start_kernel]
 ready:
 	call start_kernel
-	jmp $
+loop:
+	jmp loop
 
 
 [global do_switch]
@@ -43,14 +44,14 @@ ENTRY_MSG db "Welcome to ChaoOS", 0
 [extern do_IRQ]
 common_interrupt:
 	sti
-	pusha
+	pusha ;; store all 16bit-regular regs
 	push ds
 	push es
 	push fs
 	push gs
 	
-	mov ax, 0x10
-	mov ds, ax ;; usr seg selector
+	mov ax, 0x10 ;; Kernel data seg
+	mov ds, ax
 	mov es, ax
 	
 	mov eax, esp ; esp is the address to param struct trap* tf
@@ -63,11 +64,9 @@ restore_all:
 	pop fs
 	pop es
 	pop ds
-	popa
+	popa ; pop all 
 	add esp, 8 ;;
 	iret
-
-COMMON_INTERRUPT_ENTER db "enter common_interrupt",0
 
 %macro handler_common_init 1 ;accept one param 
 	handlers%1:
@@ -75,8 +74,6 @@ COMMON_INTERRUPT_ENTER db "enter common_interrupt",0
 			push dword 0
 		%endif
 		push dword %1
-		mov ebx, COMMON_INTERRUPT_ENTER
-		call print_string_pm 
 		jmp common_interrupt
 %endmacro
 
@@ -87,15 +84,13 @@ COMMON_INTERRUPT_ENTER db "enter common_interrupt",0
 %endrep
 
 %macro handlers_init 1
-	mov ebx, COMMON_INTERRUPT_ENTER
-	call print_string_pm 
 	dd handlers%1
 %endmacro
 
 ; vector table
 [section .data]
-[global handlers]
-handlers:
+[global handler]
+handler:
 	%assign i 0
 	%rep 129
 		handlers_init i

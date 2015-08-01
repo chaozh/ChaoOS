@@ -1,9 +1,13 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned int uint;
+typedef unsigned char uchar; //1b
+typedef unsigned short ushort; //2b
+typedef unsigned int uint; //4b
+
+typedef ushort uint16_t;
+typedef uint uint32_t;
+typedef unsigned long long uint64_t;
 
 #define NULL 0
 

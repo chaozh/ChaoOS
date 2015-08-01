@@ -18,7 +18,7 @@ reset_drive:
 	;mov es, ax ; es = 0x1000
 	mov bx, ax ; *buffer
 	mov si, 1 ; sector 1
-	mov cx, 18 ; read 128 sectors, 64KB
+	mov cx, 24 ; read 128 sectors, 64KB
 _read_sect_loop:
 	call read_sect 
 	inc si
